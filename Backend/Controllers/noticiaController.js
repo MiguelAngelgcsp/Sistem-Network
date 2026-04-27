@@ -124,3 +124,54 @@ const publicarNoticia = async (req, res) => {
     res.status(500).json({ exito: false, mensaje: error.message });
   }
 };
+// PATCH /api/noticias/:id/archivar
+const archivarNoticia = async (req, res) => {
+  try {
+    const noticia = await Noticia.findByIdAndUpdate(
+      req.params.id,
+      { estado: ESTADOS.ARCHIVADA },
+      { new: true }
+    );
+    if (!noticia) return res.status(404).json({ exito: false, mensaje: 'Noticia no encontrada.' });
+    res.json({ exito: true, mensaje: 'Noticia archivada.', noticia });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+};
+
+// DELETE /api/noticias/:id
+const eliminarNoticia = async (req, res) => {
+  try {
+    const noticia = await Noticia.findByIdAndDelete(req.params.id);
+    if (!noticia) return res.status(404).json({ exito: false, mensaje: 'Noticia no encontrada.' });
+    res.json({ exito: true, mensaje: 'Noticia eliminada.' });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+};
+
+// GET /api/noticias/reporte/estadisticas — solo admin
+const generarReporte = async (req, res) => {
+  try {
+    const [total, porEstado, porCategoria, masVistas] = await Promise.all([
+      Noticia.countDocuments(),
+      Noticia.aggregate([{ $group: { _id: '$estado', cantidad: { $sum: 1 } } }]),
+      Noticia.aggregate([
+        { $group: { _id: '$categoria', cantidad: { $sum: 1 } } },
+        { $lookup: { from: 'categorias', localField: '_id', foreignField: '_id', as: 'cat' } },
+        { $unwind: { path: '$cat', preserveNullAndEmptyArrays: true } },
+        { $project: { nombre: '$cat.nombre', cantidad: 1 } },
+      ]),
+      Noticia.find({ estado: 'publicada' }).sort('-vistas').limit(5).select('titulo vistas'),
+    ]);
+
+    res.json({ exito: true, reporte: { total, porEstado, porCategoria, masVistas, generadoEl: new Date() } });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+};
+
+module.exports = {
+  listarNoticias, obtenerNoticia, crearNoticia, editarNoticia,
+  publicarNoticia, archivarNoticia, eliminarNoticia, generarReporte,
+};
