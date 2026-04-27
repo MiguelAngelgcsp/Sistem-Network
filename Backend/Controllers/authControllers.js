@@ -21,7 +21,6 @@ const registro = async (req, res) => {
     if (existe) {
       return res.status(400).json({ exito: false, mensaje: 'El email ya está registrado.' });
     }
-
     const usuario = await Usuario.create({
       nombre,
       apellido,
