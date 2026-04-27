@@ -49,3 +49,64 @@ const PERMISOS = {
     'generar_reporte_pdf',
   ],
 };
+
+const usuarioSchema = new mongoose.Schema(
+  {
+    nombre: {
+      type: String,
+      required: [true, 'El nombre es obligatorio'],
+      trim: true,
+      minlength: [2, 'El nombre debe tener al menos 2 caracteres'],
+    },
+    apellido: {
+      type: String,
+      required: [true, 'El apellido es obligatorio'],
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: [true, 'El email es obligatorio'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, 'Formato de email inválido'],
+    },
+    password: {
+      type: String,
+      required: [true, 'La contraseña es obligatoria'],
+      minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
+      select: false,
+    },
+    rol: {
+      type: String,
+      enum: Object.values(ROLES),
+      default: ROLES.ESTUDIANTE,
+    },
+    activo: {
+      type: Boolean,
+      default: true,
+    },
+    fotoPerfil: {
+      type: String,
+      default: '',
+    },
+    bio: {
+      type: String,
+      default: '',
+      maxlength: [300, 'La bio no puede exceder 300 caracteres'],
+    },
+    ultimoAcceso: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    timestamps: true,
+    toJSON: { virtuals: true },
+  }
+);
+
+// Virtual: permisos según rol
+usuarioSchema.virtual('permisos').get(function () {
+  return PERMISOS[this.rol] || [];
+});
