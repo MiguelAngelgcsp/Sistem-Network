@@ -68,3 +68,17 @@ const noticiaSchema = new mongoose.Schema(
     toJSON: { virtuals: true },
   }
 );
+
+
+noticiaSchema.virtual('numComentarios', {
+  ref: 'Comentario',
+  localField: '_id',
+  foreignField: 'noticia',
+  count: true,
+});
+
+
+noticiaSchema.index({ titulo: 'text', contenido: 'text', etiquetas: 'text' });
+
+const Noticia = mongoose.model('Noticia', noticiaSchema);
+module.exports = { Noticia, ESTADOS };
