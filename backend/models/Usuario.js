@@ -106,7 +106,29 @@ const usuarioSchema = new mongoose.Schema(
   }
 );
 
-// Virtual: permisos según rol
+
 usuarioSchema.virtual('permisos').get(function () {
   return PERMISOS[this.rol] || [];
 });
+
+
+usuarioSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+
+usuarioSchema.methods.compararPassword = async function (passwordIngresada) {
+  return await bcrypt.compare(passwordIngresada, this.password);
+};
+
+
+usuarioSchema.methods.tienePermiso = function (permiso) {
+  return (PERMISOS[this.rol] || []).includes(permiso);
+};
+
+const Usuario = mongoose.model('Usuario', usuarioSchema);
+
+module.exports = { Usuario, ROLES, PERMISOS };
