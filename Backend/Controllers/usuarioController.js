@@ -51,3 +51,43 @@ const editarUsuario = async (req, res) => {
     res.status(500).json({ exito: false, mensaje: error.message });
   }
 };
+// DELETE /api/usuarios/:id — solo admin
+const eliminarUsuario = async (req, res) => {
+  try {
+    if (req.params.id === req.usuario._id.toString()) {
+      return res.status(400).json({ exito: false, mensaje: 'No puedes eliminarte a ti mismo.' });
+    }
+    const usuario = await Usuario.findByIdAndDelete(req.params.id);
+    if (!usuario) return res.status(404).json({ exito: false, mensaje: 'Usuario no encontrado.' });
+    res.json({ exito: true, mensaje: 'Usuario eliminado.' });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+};
+
+// PATCH /api/usuarios/:id/rol — solo admin
+const asignarRol = async (req, res) => {
+  try {
+    const { rol } = req.body;
+    if (!Object.values(ROLES).includes(rol)) {
+      return res.status(400).json({ exito: false, mensaje: `Rol inválido. Use: ${Object.values(ROLES).join(', ')}` });
+    }
+
+    if (req.params.id === req.usuario._id.toString()) {
+      return res.status(400).json({ exito: false, mensaje: 'No puedes cambiar tu propio rol.' });
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(
+      req.params.id,
+      { rol },
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!usuario) return res.status(404).json({ exito: false, mensaje: 'Usuario no encontrado.' });
+    res.json({ exito: true, mensaje: `Rol actualizado a ${rol}.`, usuario });
+  } catch (error) {
+    res.status(500).json({ exito: false, mensaje: error.message });
+  }
+};
+
+module.exports = { listarUsuarios, obtenerUsuario, editarUsuario, eliminarUsuario, asignarRol };
