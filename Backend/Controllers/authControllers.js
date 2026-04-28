@@ -1,14 +1,14 @@
 const jwt = require('jsonwebtoken');
 const { Usuario, ROLES } = require('../models/Usuario');
 
-// Generar JWT
+
 const generarToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };
 
-// POST /api/auth/registro
+
 const registro = async (req, res) => {
   try {
     const { nombre, apellido, email, password } = req.body;
@@ -49,7 +49,7 @@ const registro = async (req, res) => {
   }
 };
 
-// POST /api/auth/login
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -90,7 +90,7 @@ const login = async (req, res) => {
   }
 };
 
-// GET /api/auth/perfil
+
 const obtenerPerfil = async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.usuario._id);
@@ -114,7 +114,7 @@ const obtenerPerfil = async (req, res) => {
   }
 };
 
-// PUT /api/auth/perfil
+
 const actualizarPerfil = async (req, res) => {
   try {
     const camposPermitidos = ['nombre', 'apellido', 'bio', 'fotoPerfil'];
@@ -123,14 +123,14 @@ const actualizarPerfil = async (req, res) => {
       if (req.body[campo] !== undefined) actualizaciones[campo] = req.body[campo];
     });
 
-    // Cambio de contraseña
+    
     if (req.body.passwordActual && req.body.nuevaPassword) {
       const usuarioConPass = await Usuario.findById(req.usuario._id).select('+password');
       const correcto = await usuarioConPass.compararPassword(req.body.passwordActual);
       if (!correcto) {
         return res.status(400).json({ exito: false, mensaje: 'Contraseña actual incorrecta.' });
       }
-      // Usar save() para que el hook pre-save hashee la nueva contraseña
+    
       Object.assign(usuarioConPass, actualizaciones);
       usuarioConPass.password = req.body.nuevaPassword;
       await usuarioConPass.save();
