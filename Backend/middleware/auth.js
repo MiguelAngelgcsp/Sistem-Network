@@ -46,3 +46,31 @@ const proteger = async (req, res, next) => {
     });
   }
 };
+
+// Restringir por roles
+const restringirA = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.usuario.rol)) {
+      return res.status(403).json({
+        exito: false,
+        mensaje: `Acceso denegado. Se requiere rol: ${roles.join(' o ')}.`,
+      });
+    }
+    next();
+  };
+};
+
+// Verificar permiso específico
+const requierePermiso = (permiso) => {
+  return (req, res, next) => {
+    if (!req.usuario.tienePermiso(permiso)) {
+      return res.status(403).json({
+        exito: false,
+        mensaje: `No tienes permiso para: ${permiso}`,
+      });
+    }
+    next();
+  };
+};
+
+module.exports = { proteger, restringirA, requierePermiso };
