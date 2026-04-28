@@ -1,7 +1,7 @@
 const { Comentario, ESTADOS_COMENTARIO } = require('../models/Comentario');
 const { Noticia } = require('../models/Noticia');
 
-// GET /api/noticias/:noticiaId/comentarios
+
 const listarComentarios = async (req, res) => {
   try {
     const { noticiaId } = req.params;
@@ -21,7 +21,7 @@ const listarComentarios = async (req, res) => {
   }
 };
 
-// POST /api/noticias/:noticiaId/comentarios
+
 const agregarComentario = async (req, res) => {
   try {
     const { noticiaId } = req.params;
@@ -47,7 +47,7 @@ const agregarComentario = async (req, res) => {
   }
 };
 
-// PATCH /api/comentarios/:id/moderar — solo admin
+
 const moderarComentario = async (req, res) => {
   try {
     const { razonModeracion } = req.body;
@@ -67,13 +67,12 @@ const moderarComentario = async (req, res) => {
   }
 };
 
-// DELETE /api/comentarios/:id
 const eliminarComentario = async (req, res) => {
   try {
     const comentario = await Comentario.findById(req.params.id);
     if (!comentario) return res.status(404).json({ exito: false, mensaje: 'Comentario no encontrado.' });
 
-    // Admin puede eliminar cualquiera; usuario solo el suyo
+    
     if (
       req.usuario.rol !== 'administrador' &&
       comentario.autor.toString() !== req.usuario._id.toString()
