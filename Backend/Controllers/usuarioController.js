@@ -1,6 +1,6 @@
 const { Usuario, ROLES } = require('../models/Usuario');
 
-
+// GET /api/usuarios — solo admin
 const listarUsuarios = async (req, res) => {
   try {
     const { rol, activo, pagina = 1, limite = 10 } = req.query;
@@ -20,7 +20,7 @@ const listarUsuarios = async (req, res) => {
   }
 };
 
-
+// GET /api/usuarios/:id
 const obtenerUsuario = async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.params.id).select('-password');
@@ -31,7 +31,7 @@ const obtenerUsuario = async (req, res) => {
   }
 };
 
-
+// PUT /api/usuarios/:id — admin puede editar todo
 const editarUsuario = async (req, res) => {
   try {
     const camposPermitidos = ['nombre', 'apellido', 'bio', 'fotoPerfil', 'activo'];
@@ -52,6 +52,7 @@ const editarUsuario = async (req, res) => {
   }
 };
 
+// DELETE /api/usuarios/:id — solo admin
 const eliminarUsuario = async (req, res) => {
   try {
     if (req.params.id === req.usuario._id.toString()) {
@@ -65,6 +66,7 @@ const eliminarUsuario = async (req, res) => {
   }
 };
 
+// PATCH /api/usuarios/:id/rol — solo admin
 const asignarRol = async (req, res) => {
   try {
     const { rol } = req.body;

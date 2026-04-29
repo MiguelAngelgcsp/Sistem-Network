@@ -1,3 +1,15 @@
+/**
+ * ============================================
+ *  SEED - Sistem Network / CKN
+ *  Crea el usuario administrador inicial
+ *  y las categorías base del sistema.
+ *
+ *  Uso:
+ *    cd backend
+ *    node seed.js
+ * ============================================
+ */
+
 require('dotenv').config();
 const mongoose = require('mongoose');
 const { Usuario, ROLES } = require('./models/Usuario');
@@ -27,50 +39,51 @@ const CATEGORIAS_BASE = [
 async function seed() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
-    console.log(' Conectado a MongoDB Atlas\n');
+    console.log('✅ Conectado a MongoDB Atlas\n');
 
-   
+    // ── Admin ──────────────────────────────────────────
     const existeAdmin = await Usuario.findOne({ email: ADMIN.email });
     if (existeAdmin) {
-      console.log(`  El admin ya existe: ${ADMIN.email}`);
-      
+      console.log(`⚠️  El admin ya existe: ${ADMIN.email}`);
+      // Asegurar que el rol sea administrador
       if (existeAdmin.rol !== ROLES.ADMINISTRADOR) {
         existeAdmin.rol = ROLES.ADMINISTRADOR;
         await existeAdmin.save({ validateBeforeSave: false });
-        console.log(' Rol corregido a administrador.');
+        console.log('🔧 Rol corregido a administrador.');
       }
     } else {
-      
+      // NO pre-hashear: el hook pre-save del modelo lo hace automáticamente
       await Usuario.create({ ...ADMIN });
-      console.log(' Administrador creado:');
+      console.log('👤 Administrador creado:');
       console.log(`   Email    : ${ADMIN.email}`);
       console.log(`   Contraseña: ${ADMIN.password}`);
     }
 
-    
+    // ── Categorías ────────────────────────────────────
     const adminUser = await Usuario.findOne({ email: ADMIN.email });
 
     for (const cat of CATEGORIAS_BASE) {
       const existe = await Categoria.findOne({ nombre: cat.nombre });
       if (existe) {
-        console.log(`  Categoría ya existe: "${cat.nombre}"`);
+        console.log(`⚠️  Categoría ya existe: "${cat.nombre}"`);
       } else {
         await Categoria.create({ ...cat, creadoPor: adminUser._id });
-        console.log(`  Categoría creada: "${cat.nombre}"`);
+        console.log(`🏷️  Categoría creada: "${cat.nombre}"`);
       }
     }
 
-    console.log('\n Seed completado.');
+    console.log('\n✅ Seed completado.');
     console.log('──────────────────────────────────────────');
     console.log('  Credenciales del administrador:');
-    console.log(`   Email      : ${ADMIN.email}`);
-    console.log(`   Contraseña : ${ADMIN.password}`);
+    console.log(`  📧 Email      : ${ADMIN.email}`);
+    console.log(`  🔑 Contraseña : ${ADMIN.password}`);
     console.log('──────────────────────────────────────────\n');
   } catch (err) {
-    console.error(' Error en seed:', err.message);
+    console.error('❌ Error en seed:', err.message);
   } finally {
     await mongoose.disconnect();
     process.exit(0);
   }
 }
+
 seed();

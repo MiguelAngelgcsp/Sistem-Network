@@ -1,12 +1,12 @@
 const { Noticia, ESTADOS } = require('../models/Noticia');
 
-
+// GET /api/noticias
 const listarNoticias = async (req, res) => {
   try {
     const { estado, categoria, buscar, pagina = 1, limite = 10, destacada } = req.query;
     const filtro = {};
 
-    
+    // Público ve solo publicadas
     if (!req.usuario || req.usuario.rol === 'estudiante') {
       filtro.estado = ESTADOS.PUBLICADA;
     } else if (estado) {
@@ -35,7 +35,7 @@ const listarNoticias = async (req, res) => {
   }
 };
 
-
+// GET /api/noticias/:id
 const obtenerNoticia = async (req, res) => {
   try {
     const noticia = await Noticia.findById(req.params.id)
@@ -44,7 +44,7 @@ const obtenerNoticia = async (req, res) => {
 
     if (!noticia) return res.status(404).json({ exito: false, mensaje: 'Noticia no encontrada.' });
 
-
+    // Incrementar vistas si está publicada
     if (noticia.estado === ESTADOS.PUBLICADA) {
       noticia.vistas++;
       await noticia.save({ validateBeforeSave: false });
@@ -56,7 +56,7 @@ const obtenerNoticia = async (req, res) => {
   }
 };
 
-
+// POST /api/noticias
 const crearNoticia = async (req, res) => {
   try {
     const { titulo, contenido, resumen, imagen, categoria, etiquetas, destacada } = req.body;
@@ -86,13 +86,13 @@ const crearNoticia = async (req, res) => {
   }
 };
 
-
+// PUT /api/noticias/:id
 const editarNoticia = async (req, res) => {
   try {
     const noticia = await Noticia.findById(req.params.id);
     if (!noticia) return res.status(404).json({ exito: false, mensaje: 'Noticia no encontrada.' });
 
-    
+    // Editores solo pueden editar sus propias noticias
     if (req.usuario.rol === 'editor' && noticia.autor.toString() !== req.usuario._id.toString()) {
       return res.status(403).json({ exito: false, mensaje: 'Solo puedes editar tus propias noticias.' });
     }
@@ -110,6 +110,7 @@ const editarNoticia = async (req, res) => {
   }
 };
 
+// PATCH /api/noticias/:id/publicar
 const publicarNoticia = async (req, res) => {
   try {
     const noticia = await Noticia.findByIdAndUpdate(
@@ -124,6 +125,7 @@ const publicarNoticia = async (req, res) => {
   }
 };
 
+// PATCH /api/noticias/:id/archivar
 const archivarNoticia = async (req, res) => {
   try {
     const noticia = await Noticia.findByIdAndUpdate(
@@ -138,7 +140,7 @@ const archivarNoticia = async (req, res) => {
   }
 };
 
-
+// DELETE /api/noticias/:id
 const eliminarNoticia = async (req, res) => {
   try {
     const noticia = await Noticia.findByIdAndDelete(req.params.id);
@@ -149,7 +151,7 @@ const eliminarNoticia = async (req, res) => {
   }
 };
 
-
+// GET /api/noticias/reporte/estadisticas — solo admin
 const generarReporte = async (req, res) => {
   try {
     const [total, porEstado, porCategoria, masVistas] = await Promise.all([

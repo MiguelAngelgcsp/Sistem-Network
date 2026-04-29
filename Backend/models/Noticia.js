@@ -69,7 +69,7 @@ const noticiaSchema = new mongoose.Schema(
   }
 );
 
-
+// Virtual: número de comentarios
 noticiaSchema.virtual('numComentarios', {
   ref: 'Comentario',
   localField: '_id',
@@ -77,7 +77,7 @@ noticiaSchema.virtual('numComentarios', {
   count: true,
 });
 
-
+// Índice para búsqueda de texto
 noticiaSchema.index({ titulo: 'text', contenido: 'text', etiquetas: 'text' });
 
 const Noticia = mongoose.model('Noticia', noticiaSchema);

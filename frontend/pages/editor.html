@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Editor - Sistem Network</title>
+  <link rel="stylesheet" href="../public/css/styles.css">
+  <style>
+    .panel { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+    @media (max-width: 900px) { .panel { grid-template-columns: 1fr; } }
+    .noticia-item { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+    .noticia-item:last-child { border: none; }
+    .noticia-item-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+    .noticia-item-title { font-size: 0.95rem; font-weight: 700; }
+    .noticia-item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+    .noticia-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+<div id="nav-root"></div>
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">✏️ Panel <span>Editor</span></h1>
+    <p class="page-subtitle">Crea y gestiona noticias</p>
+  </div>
+  <div id="alert-editor" class="alert"></div>
+  <div class="panel">
+    <!-- Formulario -->
+    <div class="card">
+      <h3 id="form-title" style="margin-bottom:1.5rem;">➕ Nueva Noticia</h3>
+      <input type="hidden" id="noticia-id">
+      <div class="form-group">
+        <label class="form-label">Título *</label>
+        <input type="text" id="f-titulo" class="form-control" placeholder="Título de la noticia">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Categoría *</label>
+        <select id="f-categoria" class="form-control"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Resumen</label>
+        <input type="text" id="f-resumen" class="form-control" placeholder="Breve descripción (opcional)">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contenido *</label>
+        <textarea id="f-contenido" class="form-control" rows="8" placeholder="Escribe el contenido completo aquí..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL de imagen (opcional)</label>
+        <input type="text" id="f-imagen" class="form-control" placeholder="https://...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Etiquetas (separadas por coma)</label>
+        <input type="text" id="f-etiquetas" class="form-control" placeholder="académico, evento, convocatoria">
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="guardarNoticia('borrador')">💾 Guardar borrador</button>
+        <button class="btn btn-success" onclick="guardarNoticia('publicar')">🚀 Guardar y publicar</button>
+        <button class="btn btn-outline" onclick="limpiarFormulario()">✕ Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Lista de mis noticias -->
+    <div class="card">
+      <h3 style="margin-bottom:1rem;">Mis Noticias</h3>
+      <div id="mis-noticias"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="../public/js/api.js"></script>
+<script>
+  renderNavbar(document.getElementById('nav-root'));
+  requireAuth('editor', 'administrador');
+
+  async function cargarCategorias() {
+    const r = await apiFetch('/categorias?activa=true');
+    if (!r?.ok) return;
+    const sel = document.getElementById('f-categoria');
+    sel.innerHTML = '<option value="">Selecciona categoría</option>';
+    r.data.categorias.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c._id; o.textContent = c.nombre;
+      sel.appendChild(o);
+    });
+  }
+
+  async function cargarMisNoticias() {
+    const r = await apiFetch('/noticias?limite=20');
+    const el = document.getElementById('mis-noticias');
+    if (!r?.ok) { el.innerHTML = '<p class="empty">Error al cargar.</p>'; return; }
+    const { noticias } = r.data;
+    const user = getUser();
+    const mias = noticias.filter(n => n.autor?._id === user.id || n.autor === user.id);
+    if (!mias.length) { el.innerHTML = '<p class="empty" style="font-size:0.85rem;">Aún no has publicado noticias.</p>'; return; }
+    el.innerHTML = mias.map(n => `
+      <div class="noticia-item">
+        <div class="noticia-item-head">
+          <div>
+            <div class="noticia-item-title">${n.titulo}</div>
+            <div class="noticia-item-meta">${formatDate(n.createdAt)} · <span class="tag tag-${n.estado}">${n.estado}</span></div>
+          </div>
+          <div class="noticia-actions">
+            <button class="btn btn-outline btn-sm" onclick="editarNoticia('${n._id}')">✏️</button>
+            ${n.estado === 'borrador' ? `<button class="btn btn-success btn-sm" onclick="publicar('${n._id}')">🚀</button>` : ''}
+            ${n.estado === 'publicada' ? `<button class="btn btn-warning btn-sm" onclick="archivar('${n._id}')">📦</button>` : ''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  async function guardarNoticia(accion) {
+    const titulo = document.getElementById('f-titulo').value.trim();
+    const categoria = document.getElementById('f-categoria').value;
+    const contenido = document.getElementById('f-contenido').value.trim();
+    const resumen = document.getElementById('f-resumen').value.trim();
+    const imagen = document.getElementById('f-imagen').value.trim();
+    const etiquetasRaw = document.getElementById('f-etiquetas').value;
+    const etiquetas = etiquetasRaw ? etiquetasRaw.split(',').map(e => e.trim()) : [];
+    const id = document.getElementById('noticia-id').value;
+
+    if (!titulo || !categoria || !contenido)
+      return showAlert('alert-editor', 'Título, categoría y contenido son obligatorios.');
+
+    const body = { titulo, categoria, contenido, resumen, imagen, etiquetas };
+    let r;
+    if (id) {
+      r = await apiFetch(`/noticias/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      r = await apiFetch('/noticias', { method: 'POST', body: JSON.stringify(body) });
+    }
+    if (!r?.ok) return showAlert('alert-editor', r?.data?.mensaje || 'Error al guardar.');
+
+    const noticiaId = r.data.noticia._id;
+    if (accion === 'publicar') {
+      const rp = await apiFetch(`/noticias/${noticiaId}/publicar`, { method: 'PATCH' });
+      if (!rp?.ok) return showAlert('alert-editor', 'Noticia guardada, pero no se pudo publicar.');
+    }
+
+    showAlert('alert-editor', id ? 'Noticia actualizada.' : `Noticia ${accion === 'publicar' ? 'publicada' : 'guardada como borrador'}.`, 'success');
+    limpiarFormulario();
+    cargarMisNoticias();
+  }
+
+  async function editarNoticia(id) {
+    const r = await apiFetch(`/noticias/${id}`);
+    if (!r?.ok) return;
+    const n = r.data.noticia;
+    document.getElementById('noticia-id').value = n._id;
+    document.getElementById('f-titulo').value = n.titulo;
+    document.getElementById('f-categoria').value = n.categoria?._id || n.categoria;
+    document.getElementById('f-resumen').value = n.resumen || '';
+    document.getElementById('f-contenido').value = n.contenido;
+    document.getElementById('f-imagen').value = n.imagen || '';
+    document.getElementById('f-etiquetas').value = (n.etiquetas || []).join(', ');
+    document.getElementById('form-title').textContent = '✏️ Editar Noticia';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function publicar(id) {
+    if (!confirm('¿Publicar esta noticia?')) return;
+    const r = await apiFetch(`/noticias/${id}/publicar`, { method: 'PATCH' });
+    if (r?.ok) { showAlert('alert-editor', 'Noticia publicada.', 'success'); cargarMisNoticias(); }
+  }
+
+  async function archivar(id) {
+    if (!confirm('¿Archivar esta noticia?')) return;
+    const r = await apiFetch(`/noticias/${id}/archivar`, { method: 'PATCH' });
+    if (r?.ok) { showAlert('alert-editor', 'Noticia archivada.', 'success'); cargarMisNoticias(); }
+  }
+
+  function limpiarFormulario() {
+    document.getElementById('noticia-id').value = '';
+    document.getElementById('f-titulo').value = '';
+    document.getElementById('f-categoria').value = '';
+    document.getElementById('f-resumen').value = '';
+    document.getElementById('f-contenido').value = '';
+    document.getElementById('f-imagen').value = '';
+    document.getElementById('f-etiquetas').value = '';
+    document.getElementById('form-title').textContent = '➕ Nueva Noticia';
+  }
+
+  cargarCategorias();
+  cargarMisNoticias();
+</script>
+</body>
+</html>

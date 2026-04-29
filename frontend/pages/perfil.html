@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Perfil - Sistem Network</title>
+  <link rel="stylesheet" href="../public/css/styles.css">
+  <style>
+    .perfil-layout { display: grid; grid-template-columns: 280px 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .perfil-layout { grid-template-columns: 1fr; } }
+    .avatar { width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--accent));
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem; margin: 0 auto 1rem; }
+    .perfil-card { text-align: center; }
+    .perfil-name { font-size: 1.2rem; font-weight: 800; }
+    .perfil-email { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; }
+    .permisos-list { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 1rem; text-align: left; }
+    .permiso-item { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
+    .permiso-item::before { content: '✓'; color: var(--success); font-weight: 700; }
+  </style>
+</head>
+<body>
+<div id="nav-root"></div>
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">👤 Mi <span>Perfil</span></h1>
+    <p class="page-subtitle">Gestiona tu información personal</p>
+  </div>
+  <div id="alert-perfil" class="alert"></div>
+  <div class="perfil-layout">
+    <!-- Info -->
+    <div>
+      <div class="card perfil-card" id="perfil-info">
+        <div class="spinner"></div>
+      </div>
+    </div>
+    <!-- Edición -->
+    <div class="card">
+      <h3 style="margin-bottom:1.5rem;">Editar información</h3>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" id="p-nombre" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido</label>
+          <input type="text" id="p-apellido" class="form-control">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Biografía</label>
+        <textarea id="p-bio" class="form-control" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL foto de perfil</label>
+        <input type="text" id="p-foto" class="form-control" placeholder="https://...">
+      </div>
+
+      <hr style="border-color:var(--border);margin:1.5rem 0;">
+      <h4 style="margin-bottom:1rem;">Cambiar contraseña</h4>
+      <div class="form-group">
+        <label class="form-label">Contraseña actual</label>
+        <input type="password" id="p-pass-actual" class="form-control" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <input type="password" id="p-pass-nueva" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="guardarPerfil()">💾 Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<script src="../public/js/api.js"></script>
+<script>
+  renderNavbar(document.getElementById('nav-root'));
+  requireAuth();
+
+  async function cargarPerfil() {
+    const r = await apiFetch('/auth/perfil');
+    if (!r?.ok) return;
+    const u = r.data.usuario;
+    document.getElementById('p-nombre').value = u.nombre;
+    document.getElementById('p-apellido').value = u.apellido;
+    document.getElementById('p-bio').value = u.bio || '';
+    document.getElementById('p-foto').value = u.fotoPerfil || '';
+
+    document.getElementById('perfil-info').innerHTML = `
+      <div class="avatar">${u.fotoPerfil ? `<img src="${u.fotoPerfil}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : u.nombre[0].toUpperCase()}</div>
+      <div class="perfil-name">${u.nombre} ${u.apellido}</div>
+      <div class="perfil-email">${u.email}</div>
+      <div style="margin-top:0.75rem;"><span class="badge-rol ${u.rol}" style="font-size:0.8rem;">${u.rol}</span></div>
+      ${u.bio ? `<p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.75rem;">${u.bio}</p>` : ''}
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);">
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-bottom:0.5rem;text-align:left;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Mis permisos</p>
+        <div class="permisos-list">
+          ${(u.permisos || []).map(p => `<div class="permiso-item">${p.replace(/_/g,' ')}</div>`).join('')}
+        </div>
+      </div>
+      ${u.ultimoAcceso ? `<p style="font-size:0.72rem;color:var(--text-muted);margin-top:1rem;">Último acceso: ${formatDate(u.ultimoAcceso)}</p>` : ''}`;
+  }
+
+  async function guardarPerfil() {
+    const body = {
+      nombre: document.getElementById('p-nombre').value.trim(),
+      apellido: document.getElementById('p-apellido').value.trim(),
+      bio: document.getElementById('p-bio').value.trim(),
+      fotoPerfil: document.getElementById('p-foto').value.trim(),
+    };
+    const passActual = document.getElementById('p-pass-actual').value;
+    const passNueva = document.getElementById('p-pass-nueva').value;
+    if (passActual && passNueva) {
+      body.passwordActual = passActual;
+      body.nuevaPassword = passNueva;
+    }
+    const r = await apiFetch('/auth/perfil', { method: 'PUT', body: JSON.stringify(body) });
+    if (!r?.ok) return showAlert('alert-perfil', r?.data?.mensaje || 'Error al guardar.');
+    showAlert('alert-perfil', 'Perfil actualizado exitosamente.', 'success');
+    document.getElementById('p-pass-actual').value = '';
+    document.getElementById('p-pass-nueva').value = '';
+    // Actualizar sesión
+    const usr = getUser();
+    setSession(getToken(), { ...usr, nombre: body.nombre, apellido: body.apellido });
+    cargarPerfil();
+  }
+
+  cargarPerfil();
+</script>
+</body>
+</html>

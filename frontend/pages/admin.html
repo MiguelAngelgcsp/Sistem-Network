@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Admin - Sistem Network</title>
+  <link rel="stylesheet" href="../public/css/styles.css">
+  <style>
+    .admin-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); width: fit-content; }
+    .admin-tab { padding: 0.6rem 1.2rem; border: none; background: var(--bg-input); color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+    .admin-tab.active { background: var(--primary); color: #fff; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.2rem; text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: var(--primary-light); }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem; }
+  </style>
+</head>
+<body>
+<div id="nav-root"></div>
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">⚙️ Panel <span>Administrador</span></h1>
+    <p class="page-subtitle">Gestión completa de la plataforma</p>
+  </div>
+  <div id="alert-admin" class="alert"></div>
+
+  <!-- Stats -->
+  <div id="stats" class="stat-cards"></div>
+
+  <!-- Tabs -->
+  <div class="admin-tabs">
+    <button class="admin-tab active" onclick="switchTab('usuarios')">👥 Usuarios</button>
+    <button class="admin-tab" onclick="switchTab('noticias')">📰 Noticias</button>
+    <button class="admin-tab" onclick="switchTab('categorias')">🏷️ Categorías</button>
+    <button class="admin-tab" onclick="switchTab('comentarios')">💬 Comentarios</button>
+  </div>
+
+  <!-- USUARIOS -->
+  <div id="pane-usuarios" class="tab-pane active">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3>Usuarios del sistema</h3>
+        <select id="fil-rol" class="filter-select" onchange="cargarUsuarios()" style="padding:0.5rem 0.8rem;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;color:var(--text);">
+          <option value="">Todos los roles</option>
+          <option value="estudiante">Estudiante</option>
+          <option value="editor">Editor</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Registro</th><th>Acciones</th></tr></thead>
+          <tbody id="tabla-usuarios"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTICIAS -->
+  <div id="pane-noticias" class="tab-pane">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3>Gestión de Noticias</h3>
+        <a href="/pages/editor.html" class="btn btn-primary btn-sm">➕ Nueva</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Título</th><th>Categoría</th><th>Autor</th><th>Estado</th><th>Vistas</th><th>Acciones</th></tr></thead>
+          <tbody id="tabla-noticias"><tr><td colspan="6"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CATEGORÍAS -->
+  <div id="pane-categorias" class="tab-pane">
+    <div class="grid-2">
+      <div class="card">
+        <h3 style="margin-bottom:1.5rem;" id="cat-form-title">➕ Nueva Categoría</h3>
+        <input type="hidden" id="cat-id">
+        <div class="form-group">
+          <label class="form-label">Nombre *</label>
+          <input type="text" id="cat-nombre" class="form-control" placeholder="Ej: Académico">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción</label>
+          <input type="text" id="cat-desc" class="form-control" placeholder="Descripción breve">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color (hex)</label>
+          <input type="color" id="cat-color" class="form-control" value="#6B21A8" style="height:42px;cursor:pointer;">
+        </div>
+        <div style="display:flex;gap:0.75rem;">
+          <button class="btn btn-primary" onclick="guardarCategoria()">Guardar</button>
+          <button class="btn btn-outline" onclick="limpiarCatForm()">Cancelar</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-bottom:1rem;">Categorías existentes</h3>
+        <div id="lista-categorias"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMENTARIOS -->
+  <div id="pane-comentarios" class="tab-pane">
+    <div class="card">
+      <h3 style="margin-bottom:1rem;">Moderación de Comentarios</h3>
+      <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1rem;">Selecciona una noticia para ver sus comentarios.</p>
+      <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+        <select id="sel-noticia-com" class="form-control" style="max-width:320px;" onchange="cargarComentariosAdmin()">
+          <option value="">Selecciona noticia...</option>
+        </select>
+      </div>
+      <div id="tabla-comentarios"></div>
+    </div>
+  </div>
+</div>
+
+<script src="../public/js/api.js"></script>
+<script>
+  renderNavbar(document.getElementById('nav-root'));
+  requireAuth('administrador');
+
+  function switchTab(tab) {
+    document.querySelectorAll('.admin-tab').forEach((b, i) => {
+      const tabs = ['usuarios','noticias','categorias','comentarios'];
+      b.classList.toggle('active', tabs[i] === tab);
+    });
+    ['usuarios','noticias','categorias','comentarios'].forEach(t => {
+      document.getElementById(`pane-${t}`).classList.toggle('active', t === tab);
+    });
+    if (tab === 'noticias') cargarAdminNoticias();
+    if (tab === 'categorias') cargarCategorias();
+    if (tab === 'comentarios') cargarNoticiasSel();
+  }
+
+  // === STATS ===
+  async function cargarStats() {
+    const [ru, rn] = await Promise.all([apiFetch('/usuarios?limite=1'), apiFetch('/noticias/reporte/estadisticas')]);
+    const stats = [
+      { num: ru?.data?.total || '-', label: 'Usuarios' },
+      { num: rn?.data?.reporte?.total || '-', label: 'Noticias' },
+    ];
+    if (rn?.ok) {
+      const pe = rn.data.reporte.porEstado;
+      const pub = pe.find(e => e._id === 'publicada');
+      stats.push({ num: pub?.cantidad || 0, label: 'Publicadas' });
+    }
+    document.getElementById('stats').innerHTML = stats.map(s => `
+      <div class="stat-card"><div class="stat-num">${s.num}</div><div class="stat-label">${s.label}</div></div>`).join('');
+  }
+
+  // === USUARIOS ===
+  async function cargarUsuarios() {
+    const rol = document.getElementById('fil-rol').value;
+    let url = '/usuarios?limite=50';
+    if (rol) url += `&rol=${rol}`;
+    const r = await apiFetch(url);
+    const tbody = document.getElementById('tabla-usuarios');
+    if (!r?.ok) { tbody.innerHTML = '<tr><td colspan="6">Error.</td></tr>'; return; }
+    tbody.innerHTML = r.data.usuarios.map(u => `
+      <tr>
+        <td>${u.nombre} ${u.apellido}</td>
+        <td style="font-size:0.82rem;">${u.email}</td>
+        <td><span class="badge-rol ${u.rol}">${u.rol}</span></td>
+        <td><span class="tag ${u.activo ? 'tag-publicada' : 'tag-archivada'}">${u.activo ? 'Activo' : 'Inactivo'}</span></td>
+        <td style="font-size:0.78rem;">${formatDate(u.createdAt)}</td>
+        <td>
+          <select onchange="cambiarRol('${u._id}', this.value)" style="padding:0.3rem;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.78rem;">
+            <option value="">Rol...</option>
+            <option value="estudiante" ${u.rol==='estudiante'?'selected':''}>Estudiante</option>
+            <option value="editor" ${u.rol==='editor'?'selected':''}>Editor</option>
+            <option value="administrador" ${u.rol==='administrador'?'selected':''}>Admin</option>
+          </select>
+          <button class="btn btn-danger btn-sm" style="margin-left:0.3rem;" onclick="eliminarUsuario('${u._id}', '${u.nombre}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function cambiarRol(id, rol) {
+    if (!rol) return;
+    const r = await apiFetch(`/usuarios/${id}/rol`, { method: 'PATCH', body: JSON.stringify({ rol }) });
+    if (r?.ok) { showAlert('alert-admin', `Rol actualizado a ${rol}.`, 'success'); cargarUsuarios(); }
+    else showAlert('alert-admin', r?.data?.mensaje || 'Error.');
+  }
+
+  async function eliminarUsuario(id, nombre) {
+    if (!confirm(`¿Eliminar usuario ${nombre}?`)) return;
+    const r = await apiFetch(`/usuarios/${id}`, { method: 'DELETE' });
+    if (r?.ok) { showAlert('alert-admin', 'Usuario eliminado.', 'success'); cargarUsuarios(); }
+    else showAlert('alert-admin', r?.data?.mensaje || 'Error al eliminar.');
+  }
+
+  // === NOTICIAS ADMIN ===
+  async function cargarAdminNoticias() {
+    const r = await apiFetch('/noticias?limite=50');
+    const tbody = document.getElementById('tabla-noticias');
+    if (!r?.ok) return;
+    tbody.innerHTML = r.data.noticias.map(n => `
+      <tr>
+        <td style="max-width:200px;font-size:0.85rem;">${n.titulo}</td>
+        <td style="font-size:0.8rem;">${n.categoria?.nombre || '-'}</td>
+        <td style="font-size:0.8rem;">${n.autor?.nombre || '-'}</td>
+        <td><span class="tag tag-${n.estado}">${n.estado}</span></td>
+        <td>${n.vistas}</td>
+        <td style="display:flex;gap:0.3rem;flex-wrap:wrap;">
+          ${n.estado==='borrador' ? `<button class="btn btn-success btn-sm" onclick="accionNoticia('${n._id}','publicar')">🚀</button>` : ''}
+          ${n.estado==='publicada' ? `<button class="btn btn-warning btn-sm" onclick="accionNoticia('${n._id}','archivar')">📦</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="accionNoticia('${n._id}','eliminar')">🗑</button>
+        </td>
+      </tr>`).join('');
+  }
+
+  async function accionNoticia(id, accion) {
+    if (accion === 'eliminar' && !confirm('¿Eliminar esta noticia?')) return;
+    const endpoints = { publicar: 'PATCH', archivar: 'PATCH', eliminar: 'DELETE' };
+    const paths = { publicar: `/noticias/${id}/publicar`, archivar: `/noticias/${id}/archivar`, eliminar: `/noticias/${id}` };
+    const r = await apiFetch(paths[accion], { method: endpoints[accion] });
+    if (r?.ok) { showAlert('alert-admin', `Noticia ${accion}da.`, 'success'); cargarAdminNoticias(); }
+  }
+
+  // === CATEGORÍAS ===
+  async function cargarCategorias() {
+    const r = await apiFetch('/categorias');
+    if (!r?.ok) return;
+    document.getElementById('lista-categorias').innerHTML = r.data.categorias.map(c => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <span style="width:12px;height:12px;border-radius:50%;background:${c.color};display:inline-block;flex-shrink:0;"></span>
+          <span style="font-size:0.9rem;font-weight:600;">${c.nombre}</span>
+        </div>
+        <div style="display:flex;gap:0.3rem;">
+          <button class="btn btn-outline btn-sm" onclick="editarCat(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCat('${c._id}')">🗑</button>
+        </div>
+      </div>`).join('') || '<p class="empty" style="font-size:0.85rem;">No hay categorías.</p>';
+  }
+
+  async function guardarCategoria() {
+    const nombre = document.getElementById('cat-nombre').value.trim();
+    const descripcion = document.getElementById('cat-desc').value.trim();
+    const color = document.getElementById('cat-color').value;
+    const id = document.getElementById('cat-id').value;
+    if (!nombre) return showAlert('alert-admin', 'El nombre es obligatorio.');
+    const body = { nombre, descripcion, color };
+    const r = id
+      ? await apiFetch(`/categorias/${id}`, { method: 'PUT', body: JSON.stringify(body) })
+      : await apiFetch('/categorias', { method: 'POST', body: JSON.stringify(body) });
+    if (!r?.ok) return showAlert('alert-admin', r?.data?.mensaje || 'Error.');
+    showAlert('alert-admin', 'Categoría guardada.', 'success');
+    limpiarCatForm(); cargarCategorias();
+  }
+
+  function editarCat(c) {
+    document.getElementById('cat-id').value = c._id;
+    document.getElementById('cat-nombre').value = c.nombre;
+    document.getElementById('cat-desc').value = c.descripcion || '';
+    document.getElementById('cat-color').value = c.color || '#6B21A8';
+    document.getElementById('cat-form-title').textContent = '✏️ Editar Categoría';
+  }
+
+  async function eliminarCat(id) {
+    if (!confirm('¿Eliminar categoría?')) return;
+    const r = await apiFetch(`/categorias/${id}`, { method: 'DELETE' });
+    if (r?.ok) { showAlert('alert-admin', 'Categoría eliminada.', 'success'); cargarCategorias(); }
+  }
+
+  function limpiarCatForm() {
+    document.getElementById('cat-id').value = '';
+    document.getElementById('cat-nombre').value = '';
+    document.getElementById('cat-desc').value = '';
+    document.getElementById('cat-color').value = '#6B21A8';
+    document.getElementById('cat-form-title').textContent = '➕ Nueva Categoría';
+  }
+
+  // === COMENTARIOS ===
+  async function cargarNoticiasSel() {
+    const r = await apiFetch('/noticias?limite=50&estado=publicada');
+    if (!r?.ok) return;
+    const sel = document.getElementById('sel-noticia-com');
+    sel.innerHTML = '<option value="">Selecciona noticia...</option>';
+    r.data.noticias.forEach(n => {
+      const o = document.createElement('option');
+      o.value = n._id; o.textContent = n.titulo.slice(0, 50);
+      sel.appendChild(o);
+    });
+  }
+
+  async function cargarComentariosAdmin() {
+    const id = document.getElementById('sel-noticia-com').value;
+    if (!id) return;
+    const r = await apiFetch(`/noticias/${id}/comentarios`);
+    const el = document.getElementById('tabla-comentarios');
+    if (!r?.ok || !r.data.comentarios.length) { el.innerHTML = '<p class="empty">No hay comentarios.</p>'; return; }
+    el.innerHTML = `<div class="table-wrap"><table>
+      <thead><tr><th>Autor</th><th>Comentario</th><th>Estado</th><th>Fecha</th><th>Acción</th></tr></thead>
+      <tbody>${r.data.comentarios.map(c => `
+        <tr>
+          <td style="font-size:0.82rem;">${c.autor?.nombre || '-'} <span class="badge-rol ${c.autor?.rol}" style="font-size:0.65rem;">${c.autor?.rol||''}</span></td>
+          <td style="font-size:0.82rem;max-width:300px;">${c.contenido}</td>
+          <td><span class="tag tag-${c.estado === 'activo' ? 'publicada' : 'archivada'}">${c.estado}</span></td>
+          <td style="font-size:0.75rem;">${formatDate(c.createdAt)}</td>
+          <td style="display:flex;gap:0.3rem;">
+            ${c.estado==='activo' ? `<button class="btn btn-warning btn-sm" onclick="moderarCom('${c._id}')">⚠️ Moderar</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="eliminarCom('${c._id}')">🗑</button>
+          </td>
+        </tr>`).join('')}</tbody></table></div>`;
+  }
+
+  async function moderarCom(id) {
+    const razon = prompt('Razón de moderación:');
+    if (razon === null) return;
+    const r = await apiFetch(`/comentarios/${id}/moderar`, { method: 'PATCH', body: JSON.stringify({ razonModeracion: razon }) });
+    if (r?.ok) { showAlert('alert-admin', 'Comentario moderado.', 'success'); cargarComentariosAdmin(); }
+  }
+
+  async function eliminarCom(id) {
+    if (!confirm('¿Eliminar comentario?')) return;
+    const r = await apiFetch(`/comentarios/${id}`, { method: 'DELETE' });
+    if (r?.ok) { showAlert('alert-admin', 'Comentario eliminado.', 'success'); cargarComentariosAdmin(); }
+  }
+
+  cargarStats();
+  cargarUsuarios();
+</script>
+</body>
+</html>

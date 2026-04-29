@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión - Sistem Network</title>
+  <link rel="stylesheet" href="../public/css/styles.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1a0a2e 0%, #0F0F1A 60%); }
+    .auth-box { width: 100%; max-width: 420px; }
+    .auth-logo { text-align: center; margin-bottom: 2rem; }
+    .auth-logo h1 { font-size: 2rem; font-weight: 900; color: #fff; }
+    .auth-logo h1 span { color: #06B6D4; }
+    .auth-logo p { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.3rem; }
+    .tabs { display: flex; margin-bottom: 1.5rem; border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 0.75rem; border: none; background: var(--bg-input);
+      color: var(--text-muted); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+    .tab-btn.active { background: var(--primary); color: #fff; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="auth-box">
+  <div class="auth-logo">
+    <h1>📡 Sistem<span>Network</span></h1>
+    <p>Plataforma universitaria de comunicación CKN</p>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Iniciar Sesión</button>
+      <button class="tab-btn" onclick="switchTab('registro')">Registrarse</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="tab-login" class="tab-content active">
+      <div id="alert-login" class="alert"></div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" id="login-email" class="form-control" placeholder="tu@correo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <input type="password" id="login-pass" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-login" onclick="doLogin()">Ingresar</button>
+    </div>
+
+    <!-- REGISTRO -->
+    <div id="tab-registro" class="tab-content">
+      <div id="alert-registro" class="alert"></div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input type="text" id="reg-nombre" class="form-control" placeholder="Juan">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Apellido</label>
+          <input type="text" id="reg-apellido" class="form-control" placeholder="Pérez">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Correo electrónico</label>
+        <input type="email" id="reg-email" class="form-control" placeholder="tu@correo.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contraseña (mín. 6 caracteres)</label>
+        <input type="password" id="reg-pass" class="form-control" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doRegistro()">Crear cuenta</button>
+      <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.75rem;text-align:center;">
+        Los nuevos usuarios se registran como <strong>Estudiante</strong>.<br>
+        Un administrador puede cambiar tu rol.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script src="../public/js/api.js"></script>
+<script>
+  if (isLoggedIn()) window.location.href = '/pages/noticias.html';
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) =>
+      b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'registro')));
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-registro').classList.toggle('active', tab === 'registro');
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value;
+    if (!email || !password) return showAlert('alert-login', 'Completa todos los campos.');
+
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true; btn.textContent = 'Ingresando...';
+
+    const r = await apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+    btn.disabled = false; btn.textContent = 'Ingresar';
+
+    if (!r || !r.ok) return showAlert('alert-login', r?.data?.mensaje || 'Error de conexión.');
+    setSession(r.data.token, r.data.usuario);
+
+    const rol = r.data.usuario.rol;
+    if (rol === 'administrador') window.location.href = '/pages/admin.html';
+    else if (rol === 'editor') window.location.href = '/pages/editor.html';
+    else window.location.href = '/pages/noticias.html';
+  }
+
+  async function doRegistro() {
+    const nombre = document.getElementById('reg-nombre').value.trim();
+    const apellido = document.getElementById('reg-apellido').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-pass').value;
+    if (!nombre || !apellido || !email || !password)
+      return showAlert('alert-registro', 'Completa todos los campos.');
+
+    const r = await apiFetch('/auth/registro', {
+      method: 'POST', body: JSON.stringify({ nombre, apellido, email, password })
+    });
+    if (!r || !r.ok) return showAlert('alert-registro', r?.data?.mensaje || 'Error al registrar.');
+    setSession(r.data.token, r.data.usuario);
+    window.location.href = '/pages/noticias.html';
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (document.getElementById('tab-login').classList.contains('active')) doLogin();
+      else doRegistro();
+    }
+  });
+</script>
+</body>
+</html>

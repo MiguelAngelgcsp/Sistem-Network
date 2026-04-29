@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noticias - Sistem Network</title>
+  <link rel="stylesheet" href="../public/css/styles.css">
+  <style>
+    .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; }
+    .news-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      overflow: hidden; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;
+    }
+    .news-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(107,33,168,0.25); }
+    .news-img { width: 100%; height: 180px; object-fit: cover; background: linear-gradient(135deg, var(--primary-dark), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .news-body { padding: 1.2rem; }
+    .news-cat { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 0.5rem; }
+    .news-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; line-height: 1.4; }
+    .news-summary { font-size: 0.82rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0.75rem;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .news-footer { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted); }
+    .filters { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; }
+    .search-bar { flex: 1; min-width: 200px; }
+    .filter-select { padding: 0.6rem 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 0.875rem; cursor: pointer; }
+    .news-detail-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: none; align-items: flex-start; justify-content: center;
+      z-index: 200; padding: 2rem 1rem; overflow-y: auto;
+    }
+    .news-detail-overlay.open { display: flex; }
+    .news-detail { background: var(--bg-card); border-radius: var(--radius); max-width: 720px; width: 100%; padding: 2rem; }
+    .detail-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; }
+    .detail-content { font-size: 0.95rem; line-height: 1.8; color: var(--text-muted); margin: 1.5rem 0; white-space: pre-wrap; }
+    .comment-list { margin-top: 1.5rem; }
+    .comment-item { padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .comment-author { font-size: 0.8rem; font-weight: 700; color: var(--primary-light); }
+    .comment-date { font-size: 0.72rem; color: var(--text-muted); margin-left: 0.5rem; }
+    .comment-text { font-size: 0.875rem; margin-top: 0.3rem; }
+    .pagination { display: flex; gap: 0.5rem; justify-content: center; margin-top: 2rem; }
+    .page-btn { padding: 0.4rem 0.8rem; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text); cursor: pointer; font-size: 0.85rem; }
+    .page-btn.active, .page-btn:hover { background: var(--primary); border-color: var(--primary); }
+  </style>
+</head>
+<body>
+<div id="nav-root"></div>
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">📰 Noticias <span>Universitarias</span></h1>
+    <p class="page-subtitle">Mantente informado sobre la comunidad universitaria</p>
+  </div>
+
+  <div class="filters">
+    <input type="text" id="search" class="form-control search-bar" placeholder="🔍 Buscar noticias...">
+    <select id="filter-cat" class="filter-select" onchange="cargarNoticias()">
+      <option value="">Todas las categorías</option>
+    </select>
+    <button class="btn btn-outline btn-sm" onclick="cargarNoticias()">Actualizar</button>
+  </div>
+
+  <div id="alert-noticias" class="alert"></div>
+  <div id="news-container"><div class="spinner"></div></div>
+  <div id="pagination" class="pagination"></div>
+</div>
+
+<!-- Detalle de noticia -->
+<div id="detail-overlay" class="news-detail-overlay">
+  <div class="news-detail">
+    <div class="detail-header">
+      <div>
+        <div id="d-cat" class="news-cat"></div>
+        <h2 id="d-titulo" style="font-size:1.4rem;"></h2>
+      </div>
+      <button class="modal-close" onclick="cerrarDetalle()">✕</button>
+    </div>
+    <div style="font-size:0.8rem;color:var(--text-muted);">
+      Por <strong id="d-autor"></strong> · <span id="d-fecha"></span> · 👁 <span id="d-vistas"></span>
+    </div>
+    <div id="d-contenido" class="detail-content"></div>
+
+    <!-- Comentarios -->
+    <div id="comment-section">
+      <h3 style="margin-bottom:1rem;">💬 Comentarios</h3>
+      <div id="comment-form" style="display:none;margin-bottom:1rem;">
+        <textarea id="new-comment" class="form-control" placeholder="Escribe tu comentario..." rows="3"></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:0.5rem;" onclick="enviarComentario()">Publicar</button>
+      </div>
+      <div id="comment-list" class="comment-list"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="../public/js/api.js"></script>
+<script>
+  let currentPage = 1;
+  let currentNoticiaId = null;
+  renderNavbar(document.getElementById('nav-root'));
+
+  async function cargarCategorias() {
+    const r = await apiFetch('/categorias');
+    if (!r?.ok) return;
+    const sel = document.getElementById('filter-cat');
+    r.data.categorias.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c._id; o.textContent = c.nombre;
+      sel.appendChild(o);
+    });
+  }
+
+  async function cargarNoticias(pagina = 1) {
+    currentPage = pagina;
+    const buscar = document.getElementById('search').value;
+    const cat = document.getElementById('filter-cat').value;
+    let url = `/noticias?pagina=${pagina}&limite=9`;
+    if (buscar) url += `&buscar=${encodeURIComponent(buscar)}`;
+    if (cat) url += `&categoria=${cat}`;
+
+    document.getElementById('news-container').innerHTML = '<div class="spinner"></div>';
+    const r = await apiFetch(url);
+    if (!r?.ok) {
+      document.getElementById('news-container').innerHTML = '<p class="empty">Error al cargar noticias.</p>';
+      return;
+    }
+
+    const { noticias, total, paginas } = r.data;
+    if (!noticias.length) {
+      document.getElementById('news-container').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No hay noticias disponibles.</p></div>';
+      renderPaginacion(0, 0);
+      return;
+    }
+
+    document.getElementById('news-container').innerHTML = `<div class="news-grid">${noticias.map(n => `
+      <div class="news-card" onclick="abrirDetalle('${n._id}')">
+        <div class="news-img">${n.imagen ? `<img src="${n.imagen}" style="width:100%;height:100%;object-fit:cover;">` : '📰'}</div>
+        <div class="news-body">
+          <div class="news-cat">${n.categoria?.nombre || 'General'}</div>
+          <div class="news-title">${n.titulo}</div>
+          <div class="news-summary">${n.resumen || n.contenido.slice(0,120) + '...'}</div>
+          <div class="news-footer">
+            <span>${n.autor?.nombre} ${n.autor?.apellido || ''}</span>
+            <span>👁 ${n.vistas || 0} · 💬 ${n.numComentarios || 0}</span>
+          </div>
+        </div>
+      </div>`).join('')}</div>`;
+
+    renderPaginacion(pagina, paginas);
+  }
+
+  function renderPaginacion(current, total) {
+    const el = document.getElementById('pagination');
+    if (total <= 1) { el.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= total; i++) {
+      html += `<button class="page-btn ${i === current ? 'active' : ''}" onclick="cargarNoticias(${i})">${i}</button>`;
+    }
+    el.innerHTML = html;
+  }
+
+  async function abrirDetalle(id) {
+    currentNoticiaId = id;
+    document.getElementById('detail-overlay').classList.add('open');
+    document.getElementById('d-contenido').textContent = '⏳ Cargando...';
+    document.getElementById('comment-list').innerHTML = '<div class="spinner"></div>';
+
+    const r = await apiFetch(`/noticias/${id}`);
+    if (!r?.ok) return;
+    const n = r.data.noticia;
+    document.getElementById('d-cat').textContent = n.categoria?.nombre || '';
+    document.getElementById('d-titulo').textContent = n.titulo;
+    document.getElementById('d-autor').textContent = `${n.autor?.nombre} ${n.autor?.apellido || ''}`;
+    document.getElementById('d-fecha').textContent = formatDate(n.fechaPublicacion || n.createdAt);
+    document.getElementById('d-vistas').textContent = n.vistas;
+    document.getElementById('d-contenido').textContent = n.contenido;
+
+    if (isLoggedIn()) document.getElementById('comment-form').style.display = 'block';
+    cargarComentarios(id);
+  }
+
+  function cerrarDetalle() {
+    document.getElementById('detail-overlay').classList.remove('open');
+    currentNoticiaId = null;
+  }
+
+  async function cargarComentarios(id) {
+    const r = await apiFetch(`/noticias/${id}/comentarios`);
+    const el = document.getElementById('comment-list');
+    if (!r?.ok) { el.innerHTML = '<p style="color:var(--text-muted)">No se pudieron cargar comentarios.</p>'; return; }
+    const { comentarios } = r.data;
+    if (!comentarios.length) { el.innerHTML = '<p style="color:var(--text-muted);font-size:0.85rem;">Sé el primero en comentar.</p>'; return; }
+    el.innerHTML = comentarios.map(c => `
+      <div class="comment-item">
+        <div><span class="comment-author">${c.autor?.nombre} ${c.autor?.apellido || ''}</span>
+          <span class="comment-date">${formatDate(c.createdAt)}</span>
+          <span class="tag" style="margin-left:0.5rem;background:rgba(107,33,168,0.2);color:var(--primary-light);">${c.autor?.rol}</span>
+        </div>
+        <div class="comment-text">${c.contenido}</div>
+      </div>`).join('');
+  }
+
+  async function enviarComentario() {
+    const contenido = document.getElementById('new-comment').value.trim();
+    if (!contenido) return;
+    const r = await apiFetch(`/noticias/${currentNoticiaId}/comentarios`, {
+      method: 'POST', body: JSON.stringify({ contenido })
+    });
+    if (!r?.ok) return showAlert('alert-noticias', r?.data?.mensaje || 'Error al comentar.');
+    document.getElementById('new-comment').value = '';
+    cargarComentarios(currentNoticiaId);
+  }
+
+  document.getElementById('search').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') cargarNoticias();
+  });
+
+  document.getElementById('detail-overlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('detail-overlay')) cerrarDetalle();
+  });
+
+  cargarCategorias();
+  cargarNoticias();
+</script>
+</body>
+</html>

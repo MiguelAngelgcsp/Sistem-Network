@@ -5,11 +5,11 @@ const {
 } = require('../controllers/categoriaController');
 const { proteger, restringirA } = require('../middleware/auth');
 
-
+// Públicas
 router.get('/', listarCategorias);
 router.get('/:id', obtenerCategoria);
 
-
+// Protegidas
 router.use(proteger);
 router.post('/', restringirA('administrador', 'editor'), crearCategoria);
 router.put('/:id', restringirA('administrador'), editarCategoria);

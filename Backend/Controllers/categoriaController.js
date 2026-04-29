@@ -1,6 +1,6 @@
 const Categoria = require('../models/Categoria');
 
-
+// GET /api/categorias
 const listarCategorias = async (req, res) => {
   try {
     const { activa } = req.query;
@@ -17,7 +17,7 @@ const listarCategorias = async (req, res) => {
   }
 };
 
-
+// GET /api/categorias/:id
 const obtenerCategoria = async (req, res) => {
   try {
     const categoria = await Categoria.findById(req.params.id).populate('creadoPor', 'nombre apellido');
@@ -28,7 +28,7 @@ const obtenerCategoria = async (req, res) => {
   }
 };
 
-
+// POST /api/categorias
 const crearCategoria = async (req, res) => {
   try {
     const { nombre, descripcion, color } = req.body;
@@ -50,7 +50,7 @@ const crearCategoria = async (req, res) => {
   }
 };
 
-
+// PUT /api/categorias/:id
 const editarCategoria = async (req, res) => {
   try {
     const { nombre, descripcion, color, activa } = req.body;
@@ -66,7 +66,7 @@ const editarCategoria = async (req, res) => {
   }
 };
 
-
+// DELETE /api/categorias/:id
 const eliminarCategoria = async (req, res) => {
   try {
     const categoria = await Categoria.findByIdAndDelete(req.params.id);

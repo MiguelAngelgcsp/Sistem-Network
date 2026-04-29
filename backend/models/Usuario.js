@@ -106,12 +106,12 @@ const usuarioSchema = new mongoose.Schema(
   }
 );
 
-
+// Virtual: permisos según rol
 usuarioSchema.virtual('permisos').get(function () {
   return PERMISOS[this.rol] || [];
 });
 
-
+// Pre-save: hashear contraseña
 usuarioSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(12);
@@ -119,12 +119,12 @@ usuarioSchema.pre('save', async function (next) {
   next();
 });
 
-
+// Método: comparar contraseñas
 usuarioSchema.methods.compararPassword = async function (passwordIngresada) {
   return await bcrypt.compare(passwordIngresada, this.password);
 };
 
-
+// Método: verificar permiso
 usuarioSchema.methods.tienePermiso = function (permiso) {
   return (PERMISOS[this.rol] || []).includes(permiso);
 };
