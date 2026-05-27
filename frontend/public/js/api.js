@@ -48,7 +48,7 @@ function renderNavbar(container) {
 
   container.innerHTML = `
     <nav class="navbar">
-      <a class="navbar-brand" href="/pages/noticias.html">📡 Sistem<span>Network</span></a>
+      <a class="navbar-brand" href="/pages/noticias.html"> Sistem<span>Network</span></a>
       <div class="nav-links">
         <a href="/pages/noticias.html">Noticias</a>
         ${isAdmin ? `<a href="/pages/admin.html">Admin</a>` : ''}

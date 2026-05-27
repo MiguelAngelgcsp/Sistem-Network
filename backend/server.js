@@ -42,7 +42,7 @@ app.use('/api/comentarios', comentarioRouter);
 app.get('/api/health', (req, res) => {
   res.json({
     exito: true,
-    mensaje: '🚀 Sistem Network API funcionando',
+    mensaje: ' Sistem Network API funcionando',
     version: '1.0.0',
     equipo: 'CKN - Cable Konrad Network',
   });
@@ -61,7 +61,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n🌐 Servidor corriendo en http://localhost:${PORT}`);
-  console.log(`📡 API disponible en http://localhost:${PORT}/api`);
-  console.log(`🔐 JWT habilitado | MongoDB Atlas conectando...\n`);
+  console.log(`\n Servidor corriendo en http://localhost:${PORT}`);
+  console.log(` API disponible en http://localhost:${PORT}/api`);
+  console.log(` JWT habilitado | MongoDB Atlas conectando...\n`);
 });

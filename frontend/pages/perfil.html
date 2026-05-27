@@ -15,14 +15,14 @@
     .perfil-email { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.2rem; }
     .permisos-list { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 1rem; text-align: left; }
     .permiso-item { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; }
-    .permiso-item::before { content: '✓'; color: var(--success); font-weight: 700; }
+    .permiso-item::before { content: ''; color: var(--success); font-weight: 700; }
   </style>
 </head>
 <body>
 <div id="nav-root"></div>
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">👤 Mi <span>Perfil</span></h1>
+    <h1 class="page-title"> Mi <span>Perfil</span></h1>
     <p class="page-subtitle">Gestiona tu información personal</p>
   </div>
   <div id="alert-perfil" class="alert"></div>
@@ -65,7 +65,7 @@
         <label class="form-label">Nueva contraseña</label>
         <input type="password" id="p-pass-nueva" class="form-control" placeholder="••••••••">
       </div>
-      <button class="btn btn-primary" onclick="guardarPerfil()">💾 Guardar cambios</button>
+      <button class="btn btn-primary" onclick="guardarPerfil()"> Guardar cambios</button>
     </div>
   </div>
 </div>

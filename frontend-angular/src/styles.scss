@@ -1,0 +1,75 @@
+@use '@angular/material' as mat;
+
+@include mat.core();
+
+$primary: mat.define-palette(mat.$indigo-palette, 700);
+$accent:  mat.define-palette(mat.$orange-palette, A200);
+$warn:    mat.define-palette(mat.$red-palette);
+
+$theme: mat.define-light-theme((
+  color: (primary: $primary, accent: $accent, warn: $warn),
+  typography: mat.define-typography-config(),
+  density: 0
+));
+
+@include mat.all-component-themes($theme);
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.toolbar-spacer { flex: 1 1 auto; }
+
+.mat-mdc-card { margin-bottom: 16px; }
+
+.badge-rol {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  &.administrador { background: #3f51b5; color: #fff; }
+  &.editor        { background: #ff9800; color: #fff; }
+  &.estudiante    { background: #4caf50; color: #fff; }
+}
+
+.status-chip {
+  &.borrador   { background: #e0e0e0; color: #555; }
+  &.publicada  { background: #c8e6c9; color: #2e7d32; }
+  &.archivada  { background: #ffccbc; color: #bf360c; }
+}
+
+.full-width { width: 100%; }
+
+.actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.color-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+snack-bar-container.success .mdc-snackbar__surface {
+  background: #2e7d32 !important;
+}
+snack-bar-container.error .mdc-snackbar__surface {
+  background: #c62828 !important;
+}

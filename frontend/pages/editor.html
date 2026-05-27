@@ -20,14 +20,14 @@
 <div id="nav-root"></div>
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">✏️ Panel <span>Editor</span></h1>
+    <h1 class="page-title"> Panel <span>Editor</span></h1>
     <p class="page-subtitle">Crea y gestiona noticias</p>
   </div>
   <div id="alert-editor" class="alert"></div>
   <div class="panel">
     <!-- Formulario -->
     <div class="card">
-      <h3 id="form-title" style="margin-bottom:1.5rem;">➕ Nueva Noticia</h3>
+      <h3 id="form-title" style="margin-bottom:1.5rem;"> Nueva Noticia</h3>
       <input type="hidden" id="noticia-id">
       <div class="form-group">
         <label class="form-label">Título *</label>
@@ -54,9 +54,9 @@
         <input type="text" id="f-etiquetas" class="form-control" placeholder="académico, evento, convocatoria">
       </div>
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="guardarNoticia('borrador')">💾 Guardar borrador</button>
-        <button class="btn btn-success" onclick="guardarNoticia('publicar')">🚀 Guardar y publicar</button>
-        <button class="btn btn-outline" onclick="limpiarFormulario()">✕ Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarNoticia('borrador')"> Guardar borrador</button>
+        <button class="btn btn-success" onclick="guardarNoticia('publicar')"> Guardar y publicar</button>
+        <button class="btn btn-outline" onclick="limpiarFormulario()"> Cancelar</button>
       </div>
     </div>
 
@@ -101,9 +101,9 @@
             <div class="noticia-item-meta">${formatDate(n.createdAt)} · <span class="tag tag-${n.estado}">${n.estado}</span></div>
           </div>
           <div class="noticia-actions">
-            <button class="btn btn-outline btn-sm" onclick="editarNoticia('${n._id}')">✏️</button>
-            ${n.estado === 'borrador' ? `<button class="btn btn-success btn-sm" onclick="publicar('${n._id}')">🚀</button>` : ''}
-            ${n.estado === 'publicada' ? `<button class="btn btn-warning btn-sm" onclick="archivar('${n._id}')">📦</button>` : ''}
+            <button class="btn btn-outline btn-sm" onclick="editarNoticia('${n._id}')"></button>
+            ${n.estado === 'borrador' ? `<button class="btn btn-success btn-sm" onclick="publicar('${n._id}')"></button>` : ''}
+            ${n.estado === 'publicada' ? `<button class="btn btn-warning btn-sm" onclick="archivar('${n._id}')"></button>` : ''}
           </div>
         </div>
       </div>`).join('');
@@ -153,7 +153,7 @@
     document.getElementById('f-contenido').value = n.contenido;
     document.getElementById('f-imagen').value = n.imagen || '';
     document.getElementById('f-etiquetas').value = (n.etiquetas || []).join(', ');
-    document.getElementById('form-title').textContent = '✏️ Editar Noticia';
+    document.getElementById('form-title').textContent = ' Editar Noticia';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -177,7 +177,7 @@
     document.getElementById('f-contenido').value = '';
     document.getElementById('f-imagen').value = '';
     document.getElementById('f-etiquetas').value = '';
-    document.getElementById('form-title').textContent = '➕ Nueva Noticia';
+    document.getElementById('form-title').textContent = ' Nueva Noticia';
   }
 
   cargarCategorias();

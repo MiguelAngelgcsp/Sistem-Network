@@ -21,7 +21,7 @@
 <div id="nav-root"></div>
 <div class="container">
   <div class="page-header">
-    <h1 class="page-title">⚙️ Panel <span>Administrador</span></h1>
+    <h1 class="page-title"> Panel <span>Administrador</span></h1>
     <p class="page-subtitle">Gestión completa de la plataforma</p>
   </div>
   <div id="alert-admin" class="alert"></div>
@@ -31,10 +31,10 @@
 
   <!-- Tabs -->
   <div class="admin-tabs">
-    <button class="admin-tab active" onclick="switchTab('usuarios')">👥 Usuarios</button>
-    <button class="admin-tab" onclick="switchTab('noticias')">📰 Noticias</button>
-    <button class="admin-tab" onclick="switchTab('categorias')">🏷️ Categorías</button>
-    <button class="admin-tab" onclick="switchTab('comentarios')">💬 Comentarios</button>
+    <button class="admin-tab active" onclick="switchTab('usuarios')"> Usuarios</button>
+    <button class="admin-tab" onclick="switchTab('noticias')"> Noticias</button>
+    <button class="admin-tab" onclick="switchTab('categorias')"> Categorías</button>
+    <button class="admin-tab" onclick="switchTab('comentarios')"> Comentarios</button>
   </div>
 
   <!-- USUARIOS -->
@@ -63,7 +63,7 @@
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <h3>Gestión de Noticias</h3>
-        <a href="/pages/editor.html" class="btn btn-primary btn-sm">➕ Nueva</a>
+        <a href="/pages/editor.html" class="btn btn-primary btn-sm"> Nueva</a>
       </div>
       <div class="table-wrap">
         <table>
@@ -78,7 +78,7 @@
   <div id="pane-categorias" class="tab-pane">
     <div class="grid-2">
       <div class="card">
-        <h3 style="margin-bottom:1.5rem;" id="cat-form-title">➕ Nueva Categoría</h3>
+        <h3 style="margin-bottom:1.5rem;" id="cat-form-title"> Nueva Categoría</h3>
         <input type="hidden" id="cat-id">
         <div class="form-group">
           <label class="form-label">Nombre *</label>
@@ -175,7 +175,7 @@
             <option value="editor" ${u.rol==='editor'?'selected':''}>Editor</option>
             <option value="administrador" ${u.rol==='administrador'?'selected':''}>Admin</option>
           </select>
-          <button class="btn btn-danger btn-sm" style="margin-left:0.3rem;" onclick="eliminarUsuario('${u._id}', '${u.nombre}')">🗑</button>
+          <button class="btn btn-danger btn-sm" style="margin-left:0.3rem;" onclick="eliminarUsuario('${u._id}', '${u.nombre}')"></button>
         </td>
       </tr>`).join('');
   }
@@ -207,9 +207,9 @@
         <td><span class="tag tag-${n.estado}">${n.estado}</span></td>
         <td>${n.vistas}</td>
         <td style="display:flex;gap:0.3rem;flex-wrap:wrap;">
-          ${n.estado==='borrador' ? `<button class="btn btn-success btn-sm" onclick="accionNoticia('${n._id}','publicar')">🚀</button>` : ''}
-          ${n.estado==='publicada' ? `<button class="btn btn-warning btn-sm" onclick="accionNoticia('${n._id}','archivar')">📦</button>` : ''}
-          <button class="btn btn-danger btn-sm" onclick="accionNoticia('${n._id}','eliminar')">🗑</button>
+          ${n.estado==='borrador' ? `<button class="btn btn-success btn-sm" onclick="accionNoticia('${n._id}','publicar')"></button>` : ''}
+          ${n.estado==='publicada' ? `<button class="btn btn-warning btn-sm" onclick="accionNoticia('${n._id}','archivar')"></button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="accionNoticia('${n._id}','eliminar')"></button>
         </td>
       </tr>`).join('');
   }
@@ -233,8 +233,8 @@
           <span style="font-size:0.9rem;font-weight:600;">${c.nombre}</span>
         </div>
         <div style="display:flex;gap:0.3rem;">
-          <button class="btn btn-outline btn-sm" onclick="editarCat(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="eliminarCat('${c._id}')">🗑</button>
+          <button class="btn btn-outline btn-sm" onclick="editarCat(${JSON.stringify(c).replace(/"/g,'&quot;')})"></button>
+          <button class="btn btn-danger btn-sm" onclick="eliminarCat('${c._id}')"></button>
         </div>
       </div>`).join('') || '<p class="empty" style="font-size:0.85rem;">No hay categorías.</p>';
   }
@@ -259,7 +259,7 @@
     document.getElementById('cat-nombre').value = c.nombre;
     document.getElementById('cat-desc').value = c.descripcion || '';
     document.getElementById('cat-color').value = c.color || '#6B21A8';
-    document.getElementById('cat-form-title').textContent = '✏️ Editar Categoría';
+    document.getElementById('cat-form-title').textContent = ' Editar Categoría';
   }
 
   async function eliminarCat(id) {
@@ -273,7 +273,7 @@
     document.getElementById('cat-nombre').value = '';
     document.getElementById('cat-desc').value = '';
     document.getElementById('cat-color').value = '#6B21A8';
-    document.getElementById('cat-form-title').textContent = '➕ Nueva Categoría';
+    document.getElementById('cat-form-title').textContent = ' Nueva Categoría';
   }
 
   // === COMENTARIOS ===
@@ -304,8 +304,8 @@
           <td><span class="tag tag-${c.estado === 'activo' ? 'publicada' : 'archivada'}">${c.estado}</span></td>
           <td style="font-size:0.75rem;">${formatDate(c.createdAt)}</td>
           <td style="display:flex;gap:0.3rem;">
-            ${c.estado==='activo' ? `<button class="btn btn-warning btn-sm" onclick="moderarCom('${c._id}')">⚠️ Moderar</button>` : ''}
-            <button class="btn btn-danger btn-sm" onclick="eliminarCom('${c._id}')">🗑</button>
+            ${c.estado==='activo' ? `<button class="btn btn-warning btn-sm" onclick="moderarCom('${c._id}')"> Moderar</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="eliminarCom('${c._id}')"></button>
           </td>
         </tr>`).join('')}</tbody></table></div>`;
   }
